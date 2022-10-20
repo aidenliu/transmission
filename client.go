@@ -187,6 +187,32 @@ func (c *Client) GetTorrents() ([]*Torrent, error) {
 	return t, nil
 }
 
+// GetTorrentMapByInfoHash return torrent by infoHash
+func (c *Client) GetTorrentMapByInfoHash(infoHash []string, fields []string) (TorrentMap, error) {
+	type arg struct {
+		Fields []string `json:"fields,omitempty"`
+		Ids    []string `json:"ids,omitempty"`
+	}
+	tReq := &Request{
+		Arguments: arg{
+			Fields: fields,
+			Ids:    infoHash,
+		},
+		Method: "torrent-get",
+	}
+	r := &Response{Arguments: &Torrents{}}
+	err := c.request(tReq, r)
+	if err != nil {
+		return nil, err
+	}
+	t := r.Arguments.(*Torrents).Torrents
+	tm := make(TorrentMap)
+	for _, v := range t {
+		tm[v.HashString] = v
+	}
+	return tm, nil
+}
+
 // GetTorrentMap returns a map of torrents indexed by torrent hash.
 func (c *Client) GetTorrentMap() (TorrentMap, error) {
 	torrents, err := c.GetTorrents()
